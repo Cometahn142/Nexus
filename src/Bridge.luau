@@ -5,7 +5,7 @@ local Snap = require(script.Parent.Parent.Snap)
 
 type SnapAny = any
 
-export type NamespaceEntry = {
+export type ChannelEntry = {
 	signals: { [string]: SnapAny },
 	methods: { [string]: SnapAny },
 	properties: { [string]: SnapAny },
@@ -22,7 +22,6 @@ end
 
 local Bridge = {}
 
---- Alphabetical order so server and client assign the same Snap namespace `wireId` sequence.
 function Bridge.sortedServiceNames(serviceSchemas: { [string]: any }): { string }
 	local names: { string } = {}
 	for serviceName in serviceSchemas do
@@ -32,32 +31,29 @@ function Bridge.sortedServiceNames(serviceSchemas: { [string]: any }): { string 
 	return names
 end
 
-function Bridge.buildNamespace(serviceName: string, markers: { [string]: any }): NamespaceEntry
-	local entry: NamespaceEntry = {
+function Bridge.buildChannel(serviceName: string, markers: { [string]: any }): ChannelEntry
+	local entry: ChannelEntry = {
 		signals = {},
 		methods = {},
 		properties = {},
 	}
 
-	local ns = (Snap :: any).defineNamespace(serviceName, function(p: any)
-		local defs: { [string]: any } = {}
-
-		for name, marker in markers do
-			if not isMarker(marker) then
-				continue
-			end
-
-			if marker._nexusType == SIGNAL then
-				defs[name] = p.packet(marker._dataType, marker._reliability)
-			elseif marker._nexusType == METHOD then
-				defs[name] = p.invoke(marker._requestType, marker._responseType)
-			elseif marker._nexusType == PROPERTY then
-				defs[PROPERTY_PREFIX .. name] = p.packet(marker._dataType, "Reliable")
-			end
+	local defs: { [string]: any } = {}
+	for name, marker in markers do
+		if not isMarker(marker) then
+			continue
 		end
 
-		return defs
-	end)
+		if marker._nexusType == SIGNAL then
+			defs[name] = Snap.event(marker._dataType, marker._reliability)
+		elseif marker._nexusType == METHOD then
+			defs[name] = Snap.request(marker._requestType, marker._responseType)
+		elseif marker._nexusType == PROPERTY then
+			defs[PROPERTY_PREFIX .. name] = Snap.event(marker._dataType, "Reliable")
+		end
+	end
+
+	local ns = (Snap :: any).channel(serviceName, defs)
 
 	for name, marker in markers do
 		if not isMarker(marker) then
@@ -76,11 +72,11 @@ function Bridge.buildNamespace(serviceName: string, markers: { [string]: any }):
 	return entry
 end
 
-function Bridge.build(serviceSchemas: { [string]: { [string]: any } }): { [string]: NamespaceEntry }
-	local result: { [string]: NamespaceEntry } = {}
+function Bridge.build(serviceSchemas: { [string]: { [string]: any } }): { [string]: ChannelEntry }
+	local result: { [string]: ChannelEntry } = {}
 	for _, serviceName in Bridge.sortedServiceNames(serviceSchemas) do
 		local markers = serviceSchemas[serviceName]
-		result[serviceName] = Bridge.buildNamespace(serviceName, markers)
+		result[serviceName] = Bridge.buildChannel(serviceName, markers)
 	end
 	return result
 end

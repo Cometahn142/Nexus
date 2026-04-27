@@ -68,6 +68,10 @@ local Controller = Nexus.CreateController({
 Controllers are usually the right home for UI state, local input handling,
 camera logic, and other client-owned behavior.
 
+> [!IMPORTANT]
+> To use `Nexus.GetService` on the client, the client framework must know the service's contract. 
+> You must expose the service definitions (specifically the `.Client` schemas) to the client (e.g. in `ReplicatedStorage`) and call `Nexus.AddServices(SharedFolder)` on the client before starting.
+
 ## Access helpers
 
 - `Nexus.GetService(name)`

@@ -12,7 +12,7 @@ local Bridge = require(script.Parent.Bridge)
 local Loader = require(script.Parent.Loader)
 local Middleware = require(script.Parent.Middleware)
 
-type BridgeEntry = Bridge.NamespaceEntry
+type BridgeEntry = Bridge.ChannelEntry
 type Janitor = Janitor.Janitor
 type MiddlewareFn = Middleware.Middleware
 
@@ -50,13 +50,16 @@ local globalMiddleware = {
 	Outbound = {} :: { MiddlewareFn },
 }
 
-local function createRemoteSignal(packet: any, serviceMw: { Inbound: { MiddlewareFn }?, Outbound: { MiddlewareFn }? }?): any
+local function createRemoteSignal(
+	packet: any,
+	serviceMw: { Inbound: { MiddlewareFn }?, Outbound: { MiddlewareFn }? }?
+): any
 	local inbound = if serviceMw then serviceMw.Inbound else nil
 	local outbound = if serviceMw then serviceMw.Outbound else nil
 
 	local self = {}
 
-	function self.FireTo(_: any, player: Player, data: any)
+	function self.sendTo(_: any, player: Player, data: any)
 		local ok, transformed = Middleware.runOutbound(globalMiddleware.Outbound, outbound, player, data)
 		if not ok then
 			return
@@ -64,7 +67,7 @@ local function createRemoteSignal(packet: any, serviceMw: { Inbound: { Middlewar
 		packet:sendTo(player, transformed)
 	end
 
-	function self.FireAll(_: any, data: any)
+	function self.sendToAll(_: any, data: any)
 		local ok, transformed = Middleware.runOutbound(globalMiddleware.Outbound, outbound, nil, data)
 		if not ok then
 			return
@@ -72,7 +75,7 @@ local function createRemoteSignal(packet: any, serviceMw: { Inbound: { Middlewar
 		packet:sendToAll(transformed)
 	end
 
-	function self.FireAllExcept(_: any, except: Player, data: any)
+	function self.sendToAllExcept(_: any, except: Player, data: any)
 		local ok, transformed = Middleware.runOutbound(globalMiddleware.Outbound, outbound, nil, data)
 		if not ok then
 			return
@@ -80,7 +83,7 @@ local function createRemoteSignal(packet: any, serviceMw: { Inbound: { Middlewar
 		packet:sendToAllExcept(except, transformed)
 	end
 
-	function self.FireList(_: any, list: { Player }, data: any)
+	function self.sendToList(_: any, list: { Player }, data: any)
 		local ok, transformed = Middleware.runOutbound(globalMiddleware.Outbound, outbound, nil, data)
 		if not ok then
 			return
@@ -88,7 +91,7 @@ local function createRemoteSignal(packet: any, serviceMw: { Inbound: { Middlewar
 		packet:sendToList(list, transformed)
 	end
 
-	function self.Connect(_: any, callback: (data: any, sender: Player) -> ()): any
+	function self.listen(_: any, callback: (data: any, sender: Player) -> ()): any
 		local connected = true
 		local unlisten = packet:listen(function(sender: Player, data: any)
 			if not connected then
@@ -102,12 +105,12 @@ local function createRemoteSignal(packet: any, serviceMw: { Inbound: { Middlewar
 		end)
 
 		local conn: any = { Connected = true }
-		function conn:Disconnect()
+		function conn.Disconnect(c: any)
 			if not connected then
 				return
 			end
 			connected = false
-			self.Connected = false
+			c.Connected = false
 			unlisten()
 		end
 		return conn
@@ -139,13 +142,16 @@ local function createRemoteSignal(packet: any, serviceMw: { Inbound: { Middlewar
 	return table.freeze(self)
 end
 
-local function createRemoteMethod(snapInvoke: any, serviceMw: { Inbound: { MiddlewareFn }?, Outbound: { MiddlewareFn }? }?): any
+local function createRemoteMethod(
+	snapInvoke: any,
+	serviceMw: { Inbound: { MiddlewareFn }?, Outbound: { MiddlewareFn }? }?
+): any
 	local inbound = if serviceMw then serviceMw.Inbound else nil
 	local outbound = if serviceMw then serviceMw.Outbound else nil
 
 	local self = {}
 
-	function self.OnInvoke(_: any, handler: (player: Player, data: any) -> any)
+	function self.handle(_: any, handler: (player: Player, data: any) -> any)
 		snapInvoke:handle(function(sender: Player, data: any): any
 			local ok, transformed = Middleware.runInbound(globalMiddleware.Inbound, inbound, sender, data)
 			if not ok then
@@ -155,24 +161,24 @@ local function createRemoteMethod(snapInvoke: any, serviceMw: { Inbound: { Middl
 		end)
 	end
 
-	function self.Invoke(_: any, player: Player, data: any): any
+	function self.request(_: any, player: Player, data: any): any
 		local ok, transformed = Middleware.runOutbound(globalMiddleware.Outbound, outbound, player, data)
 		if not ok then
 			error("[Nexus] Outbound middleware rejected invoke", 2)
 		end
-		local success, result = snapInvoke:invoke(player, transformed)
+		local success, result = snapInvoke:request(player, transformed)
 		if not success then
 			error(result, 2)
 		end
 		return result
 	end
 
-	function self.TryInvoke(_: any, player: Player, data: any): (boolean, any)
+	function self.tryRequest(_: any, player: Player, data: any): (boolean, any)
 		local ok, transformed = Middleware.runOutbound(globalMiddleware.Outbound, outbound, player, data)
 		if not ok then
 			return false, "outbound middleware rejected"
 		end
-		return snapInvoke:invoke(player, transformed)
+		return snapInvoke:request(player, transformed)
 	end
 
 	return table.freeze(self)
@@ -294,7 +300,7 @@ Nexus.PlayerAdded = Signal.new()
 Nexus.PlayerLeaving = Signal.new()
 Nexus.Middleware = globalMiddleware
 
-function Nexus.CreateService(serviceDef: ServiceDef): Service
+function Nexus.CreateService<T>(serviceDef: T): T & Service
 	assert(type(serviceDef) == "table", "[Nexus] Service must be a table")
 	assert(
 		type(serviceDef.Name) == "string" and #serviceDef.Name > 0,
@@ -311,14 +317,15 @@ function Nexus.CreateService(serviceDef: ServiceDef): Service
 	services[service.Name] = service
 	table.insert(servicesInInsertOrder, service)
 	onServiceRegistered:Fire(service.Name, service)
-	return service
+
+	return serviceDef :: any
 end
 
 function Nexus.AddServices(folder: Instance): { Service }
 	assert(not started, "[Nexus] Cannot add services after Start()")
 	local loaded = Loader.loadAll(folder)
 	local out: { Service } = {}
-	for _, value in loaded do
+	for _, value: any in loaded do
 		if type(value) == "table" and type(value.Name) == "string" and services[value.Name] == value then
 			table.insert(out, value)
 		end
@@ -378,9 +385,9 @@ function Nexus.Start(_options: { [string]: any }?): any
 
 	return Promise.new(function(resolve: any, reject: any)
 		local schemas = collectSchemas()
-		local namespaces = Bridge.build(schemas)
+		local channels = Bridge.build(schemas)
 
-		for serviceName, nsEntry in namespaces do
+		for serviceName, nsEntry in channels do
 			local service = services[serviceName]
 			if service then
 				bindService(service, nsEntry)

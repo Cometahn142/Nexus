@@ -17,13 +17,10 @@ local function loadRecursive(parent: Instance, out: { any })
 	end
 end
 
-function Loader.loadAll(folder: Instance): { any }
-	assert(
-		typeof(folder) == "Instance",
-		"[Nexus] Loader expects an Instance; got " .. typeof(folder)
-	)
-	local out: { any } = {}
-	loadRecursive(folder, out)
+function Loader.loadAll<T>(folder: Instance): { T }
+	assert(typeof(folder) == "Instance", "[Nexus] Loader expects an Instance; got " .. typeof(folder))
+	local out: { T } = {}
+	loadRecursive(folder, (out :: any) :: { any })
 	return out
 end
 

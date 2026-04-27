@@ -1,7 +1,7 @@
 --!strict
 --!optimize 2
 
-export type Middleware = (player: Player?, data: any) -> (boolean, any?)
+export type Middleware<T = any> = (player: Player?, data: T) -> (boolean, T?)
 
 export type Pipeline = {
 	Inbound: { Middleware }?,

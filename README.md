@@ -10,7 +10,7 @@ and uses Snap for binary networking.
 - Declarative service markers (`Signal`, `UnreliableSignal`, `Method`, `Property`)
 - Typed serialization through `Nexus.t` (Snap data types)
 - Quick method signature (`Nexus.Method(requestType, responseType, timeout?)`)
-- Raw Snap access via `Nexus.Snap` / `Nexus.DefineNamespace`
+- Raw Snap access via `Nexus.Snap`
 - Service and controller lifecycle (`NexusInit`, `NexusStart`)
 - Global and per-service middleware (Inbound/Outbound)
 - Deterministic `Order` execution
@@ -21,7 +21,7 @@ and uses Snap for binary networking.
 
 ```toml
 [dependencies]
-Nexus = "cometahn142/nexus@^0.1"
+Nexus = "cometahn142/nexus@^0.3"
 ```
 
 ## Server

@@ -24,6 +24,9 @@ Nexus.AddControllers(PlayerScripts.Controllers)
 Nexus.Start()
 ```
 
+> [!IMPORTANT]
+> The client requires access to the server's `.Client` table declarations. Always map them via `Nexus.AddServices` on the client using shared scripts.
+
 ## Building services around contracts
 
 The most important pattern in Nexus is defining the client-facing contract
@@ -43,8 +46,8 @@ local InventoryService = Nexus.CreateService({
 This makes the service boundary explicit and keeps networking close to the
 feature it belongs to.
 
-When needed, you can still use raw Snap APIs through `Nexus.Snap` or
-`Nexus.DefineNamespace(...)` without adding another require path.
+When needed, you can still use raw Snap APIs through `Nexus.Snap` without
+adding another require path.
 
 ## Using controllers as client owners
 

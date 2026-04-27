@@ -17,7 +17,7 @@ This page summarizes the public API surface exposed by Nexus.
 - `Nexus.Method({ Request, Response, Timeout? })`
 - `Nexus.Method(requestType, responseType, timeout?)`
 - `Nexus.Property(dataType, initialValue)`
-- `Nexus.DefineNamespace(namespaceName, builder)` (advanced Snap escape hatch)
+- `Nexus.Property(dataType, initialValue)`
 
 These define the client-facing contract of a service.
 
@@ -46,16 +46,16 @@ These define the client-facing contract of a service.
 
 ### Server-side
 
-- `RemoteSignal.FireTo(player, data)`
-- `RemoteSignal.FireAll(data)`
-- `RemoteSignal.FireAllExcept(player, data)`
-- `RemoteSignal.FireList(players, data)`
-- `RemoteSignal.Connect(callback)`
+- `RemoteSignal.listen(callback)`
+- `RemoteSignal.sendTo(player, data)`
+- `RemoteSignal.sendToAll(data)`
+- `RemoteSignal.sendToAllExcept(player, data)`
+- `RemoteSignal.sendToList(players, data)`
 - `RemoteSignal.Wait()`
 
-- `RemoteMethod.OnInvoke(handler)`
-- `RemoteMethod.Invoke(player, data)`
-- `RemoteMethod.TryInvoke(player, data)`
+- `RemoteMethod.handle(handler)`
+- `RemoteMethod.request(player, data)`
+- `RemoteMethod.tryRequest(player, data)`
 
 - `RemoteProperty.Set(value)`
 - `RemoteProperty.SetFor(player, value)`
@@ -65,12 +65,12 @@ These define the client-facing contract of a service.
 
 ### Client-side
 
-- `ClientSignal.Connect(callback)`
-- `ClientSignal.Fire(data)`
+- `ClientSignal.listen(callback)`
+- `ClientSignal.send(data)`
 - `ClientSignal.Wait()`
 
-- `ClientMethod.Invoke(data)`
-- `ClientMethod.TryInvoke(data)`
+- `ClientMethod.request(data)`
+- `ClientMethod.tryRequest(data)`
 
 - `ClientProperty.Get()`
 - `ClientProperty.Observe(callback)`

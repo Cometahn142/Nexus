@@ -39,18 +39,18 @@ export type Connection = {
 	Disconnect: (self: Connection) -> (),
 }
 export type RemoteSignal<T> = {
-	FireTo: (self: RemoteSignal<T>, player: Player, data: T) -> (),
-	FireAll: (self: RemoteSignal<T>, data: T) -> (),
-	FireAllExcept: (self: RemoteSignal<T>, except: Player, data: T) -> (),
-	FireList: (self: RemoteSignal<T>, players: { Player }, data: T) -> (),
-	Connect: (self: RemoteSignal<T>, callback: (data: T, sender: Player) -> ()) -> Connection,
+	listen: (self: RemoteSignal<T>, callback: (data: T, sender: Player) -> ()) -> Connection,
+	sendTo: (self: RemoteSignal<T>, player: Player, data: T) -> (),
+	sendToAll: (self: RemoteSignal<T>, data: T) -> (),
+	sendToAllExcept: (self: RemoteSignal<T>, except: Player, data: T) -> (),
+	sendToList: (self: RemoteSignal<T>, players: { Player }, data: T) -> (),
 	Wait: (self: RemoteSignal<T>) -> (T, Player),
 }
 
 export type RemoteMethod<TReq, TRes> = {
-	OnInvoke: (self: RemoteMethod<TReq, TRes>, handler: (player: Player, data: TReq) -> TRes) -> (),
-	Invoke: (self: RemoteMethod<TReq, TRes>, player: Player, data: TReq) -> TRes,
-	TryInvoke: (self: RemoteMethod<TReq, TRes>, player: Player, data: TReq) -> (boolean, any),
+	handle: (self: RemoteMethod<TReq, TRes>, handler: (player: Player, data: TReq) -> TRes) -> (),
+	request: (self: RemoteMethod<TReq, TRes>, player: Player, data: TReq) -> TRes,
+	tryRequest: (self: RemoteMethod<TReq, TRes>, player: Player, data: TReq) -> (boolean, any),
 }
 
 export type RemoteProperty<T> = {
@@ -62,14 +62,14 @@ export type RemoteProperty<T> = {
 }
 
 export type ClientSignal<T> = {
-	Connect: (self: ClientSignal<T>, callback: (data: T) -> ()) -> Connection,
-	Fire: (self: ClientSignal<T>, data: T) -> (),
+	listen: (self: ClientSignal<T>, callback: (data: T) -> ()) -> Connection,
+	send: (self: ClientSignal<T>, data: T) -> (),
 	Wait: (self: ClientSignal<T>) -> T,
 }
 
 export type ClientMethod<TReq, TRes> = {
-	Invoke: (self: ClientMethod<TReq, TRes>, data: TReq) -> TRes,
-	TryInvoke: (self: ClientMethod<TReq, TRes>, data: TReq) -> (boolean, any),
+	request: (self: ClientMethod<TReq, TRes>, data: TReq) -> TRes,
+	tryRequest: (self: ClientMethod<TReq, TRes>, data: TReq) -> (boolean, any),
 }
 
 export type ClientProperty<T> = {
@@ -241,12 +241,6 @@ local function Method<TReq, TRes>(
 	}) :: any
 end
 
-local function DefineNamespace(namespaceName: string, builder: (any) -> { [string]: any }): any
-	assert(type(namespaceName) == "string" and #namespaceName > 0, "[Nexus] namespaceName must be a non-empty string")
-	assert(type(builder) == "function", "[Nexus] builder must be a function")
-	return (Snap :: any).defineNamespace(namespaceName, builder)
-end
-
 local function Property<T>(dataType: DataType<T>, initialValue: T): PropertyMarker<T>
 	return table.freeze({
 		_nexusType = "Property" :: "Property",
@@ -259,27 +253,25 @@ export type NexusAPI = {
 	Version: string,
 	Player: Player?,
 	Snap: typeof(Snap),
-	DefineNamespace: (namespaceName: string, builder: (any) -> { [string]: any }) -> any,
 	t: DataTypes,
 
 	Middleware: MiddlewarePipeline,
 
 	Signal: <T>(dataType: DataType<T>, reliability: Reliability?) -> SignalMarker<T>,
 	UnreliableSignal: <T>(dataType: DataType<T>) -> SignalMarker<T>,
-	Method: (<TReq, TRes>(config: MethodConfig<TReq, TRes>) -> MethodMarker<TReq, TRes>)
-		& (<TReq, TRes>(
-			requestType: DataType<TReq>,
-			responseType: DataType<TRes>,
-			timeout: number?
-		) -> MethodMarker<TReq, TRes>),
+	Method: (<TReq, TRes>(config: MethodConfig<TReq, TRes>) -> MethodMarker<TReq, TRes>) & (<TReq, TRes>(
+		requestType: DataType<TReq>,
+		responseType: DataType<TRes>,
+		timeout: number?
+	) -> MethodMarker<TReq, TRes>),
 	Property: <T>(dataType: DataType<T>, initialValue: T) -> PropertyMarker<T>,
 
-	CreateService: (serviceDef: ServiceDef) -> Service,
+	CreateService: <T>(serviceDef: T) -> T & Service,
 	AddServices: (folder: Instance) -> { Service },
 	GetService: (serviceName: string) -> any,
 	OnServiceReady: (serviceName: string) -> any,
 
-	CreateController: (controllerDef: ControllerDef) -> Controller,
+	CreateController: <T>(controllerDef: T) -> T & Controller,
 	AddControllers: (folder: Instance) -> { Controller },
 	GetController: (controllerName: string) -> Controller,
 	OnControllerReady: (controllerName: string) -> any,
@@ -308,7 +300,6 @@ impl.UnreliableSignal = UnreliableSignal
 impl.Method = Method
 impl.Property = Property
 impl.Snap = Snap
-impl.DefineNamespace = DefineNamespace
 impl.t = t
 
 return (impl :: any) :: NexusAPI

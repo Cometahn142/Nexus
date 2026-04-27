@@ -8,7 +8,7 @@ If your project already uses Wally:
 
 ```toml
 [dependencies]
-Nexus = "cometahn142/nexus@^0.1"
+Nexus = "cometahn142/nexus@^0.3"
 ```
 
 Because Nexus depends on shared packages such as Snap, Promise, Signal, and

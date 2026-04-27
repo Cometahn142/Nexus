@@ -1,7 +1,7 @@
 [package]
 name = "cometahn142/nexus"
 description = "Nexus For Roblox"
-version = "0.2.1"
+version = "0.3.0"
 license = "MIT"
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
@@ -11,4 +11,4 @@ include = ["src", "default.project.json", "LICENSE", "README.md"]
 Signal = "cometahn142/signal@^0.1"
 Promise = "cometahn142/promise@^0.1"
 Janitor = "cometahn142/janitor@^0.1"
-Snap = "cometahn142/snap@^0.2"
+Snap = "cometahn142/snap@^0.3"

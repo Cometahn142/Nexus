@@ -12,7 +12,7 @@ local Bridge = require(script.Parent.Bridge)
 local Loader = require(script.Parent.Loader)
 local Middleware = require(script.Parent.Middleware)
 
-type BridgeEntry = Bridge.NamespaceEntry
+type BridgeEntry = Bridge.ChannelEntry
 type Janitor = Janitor.Janitor
 type MiddlewareFn = Middleware.Middleware
 
@@ -51,7 +51,7 @@ local globalMiddleware = {
 local function createClientSignal(packet: any): any
 	local self = {}
 
-	function self.Connect(_: any, callback: (data: any) -> ()): any
+	function self.listen(_: any, callback: (data: any) -> ()): any
 		local connected = true
 		local unlisten = packet:listen(function(data: any)
 			if not connected then
@@ -65,18 +65,18 @@ local function createClientSignal(packet: any): any
 		end)
 
 		local conn: any = { Connected = true }
-		function conn:Disconnect()
+		function conn.Disconnect(c: any)
 			if not connected then
 				return
 			end
 			connected = false
-			self.Connected = false
+			c.Connected = false
 			unlisten()
 		end
 		return conn
 	end
 
-	function self.Fire(_: any, data: any)
+	function self.send(_: any, data: any)
 		local ok, transformed = Middleware.runOutbound(globalMiddleware.Outbound, nil, nil, data)
 		if not ok then
 			return
@@ -113,24 +113,24 @@ end
 local function createClientMethod(snapInvoke: any): any
 	local self = {}
 
-	function self.Invoke(_: any, data: any): any
+	function self.request(_: any, data: any): any
 		local ok, transformed = Middleware.runOutbound(globalMiddleware.Outbound, nil, nil, data)
 		if not ok then
 			error("[Nexus] Outbound middleware rejected invoke", 2)
 		end
-		local success, result = snapInvoke:invoke(transformed)
+		local success, result = snapInvoke:request(transformed)
 		if not success then
 			error(result, 2)
 		end
 		return result
 	end
 
-	function self.TryInvoke(_: any, data: any): (boolean, any)
+	function self.tryRequest(_: any, data: any): (boolean, any)
 		local ok, transformed = Middleware.runOutbound(globalMiddleware.Outbound, nil, nil, data)
 		if not ok then
 			return false, "outbound middleware rejected"
 		end
-		return snapInvoke:invoke(transformed)
+		return snapInvoke:request(transformed)
 	end
 
 	return table.freeze(self)
@@ -167,11 +167,11 @@ local function createClientProperty(packet: any): any
 		end
 
 		local conn: any = { Connected = true }
-		function conn:Disconnect()
-			if not self.Connected then
+		function conn.Disconnect(c: any)
+			if not c.Connected then
 				return
 			end
-			self.Connected = false
+			c.Connected = false
 			local idx = table.find(observers, callback)
 			if idx then
 				table.remove(observers, idx)
@@ -184,11 +184,11 @@ local function createClientProperty(packet: any): any
 		table.insert(changeListeners, callback)
 
 		local conn: any = { Connected = true }
-		function conn:Disconnect()
-			if not self.Connected then
+		function conn.Disconnect(c: any)
+			if not c.Connected then
 				return
 			end
-			self.Connected = false
+			c.Connected = false
 			local idx = table.find(changeListeners, callback)
 			if idx then
 				table.remove(changeListeners, idx)
@@ -220,8 +220,8 @@ local function buildServiceProxy(nsEntry: BridgeEntry, markers: { [string]: any 
 	return proxy
 end
 
---- Registers every Snap namespace in the same order as the server (`Bridge.build`), so `wireId` lines up.
-local function buildAllClientNamespacesInOrder()
+--- Registers every Snap channel in the same order as the server (`Bridge.build`), so `wireId` lines up.
+local function buildAllClientChannelsInOrder()
 	for _, serviceName in Bridge.sortedServiceNames(serviceSchemas) do
 		if serviceProxies[serviceName] then
 			continue
@@ -231,7 +231,7 @@ local function buildAllClientNamespacesInOrder()
 			continue
 		end
 
-		local nsEntry = Bridge.buildNamespace(serviceName, markers)
+		local nsEntry = Bridge.buildChannel(serviceName, markers)
 		serviceBridge[serviceName] = nsEntry
 		local realProxy = buildServiceProxy(nsEntry, markers)
 		local lazyProxy = lazyProxies[serviceName]
@@ -262,7 +262,7 @@ local function ensureServiceBuilt(serviceName: string): { [string]: any }?
 		return nil
 	end
 
-	local nsEntry = Bridge.buildNamespace(serviceName, markers)
+	local nsEntry = Bridge.buildChannel(serviceName, markers)
 	serviceBridge[serviceName] = nsEntry
 	local proxy = buildServiceProxy(nsEntry, markers)
 	serviceProxies[serviceName] = proxy
@@ -299,7 +299,7 @@ function Nexus.CreateService(serviceDef: any): any
 	if type(markers) == "table" and next(markers) ~= nil then
 		serviceSchemas[name] = markers
 
-		-- Snap namespaces are created in `Nexus.Start` (sorted order) so wire ids match the server.
+		-- Snap channels are created in `Nexus.Start` (sorted order) so wire ids match the server.
 
 		onServiceSchemaRegistered:Fire(name)
 	end
@@ -307,7 +307,7 @@ function Nexus.CreateService(serviceDef: any): any
 	return serviceDef
 end
 
-function Nexus.CreateController(controllerDef: ControllerDef): Controller
+function Nexus.CreateController<T>(controllerDef: T): T & Controller
 	assert(type(controllerDef) == "table", "[Nexus] Controller must be a table")
 	assert(
 		type(controllerDef.Name) == "string" and #controllerDef.Name > 0,
@@ -320,7 +320,8 @@ function Nexus.CreateController(controllerDef: ControllerDef): Controller
 	controllers[controller.Name] = controller
 	table.insert(controllersInInsertOrder, controller)
 	onControllerRegistered:Fire(controller.Name, controller)
-	return controller
+
+	return controllerDef :: any
 end
 
 function Nexus.AddServices(folder: Instance): { any }
@@ -332,7 +333,7 @@ function Nexus.AddControllers(folder: Instance): { Controller }
 	assert(not started, "[Nexus] Cannot add controllers after Start()")
 	local loaded = Loader.loadAll(folder)
 	local out: { Controller } = {}
-	for _, value in loaded do
+	for _, value: any in loaded do
 		if type(value) == "table" and type(value.Name) == "string" and controllers[value.Name] == value then
 			table.insert(out, value)
 		end
@@ -361,10 +362,7 @@ function Nexus.GetService(serviceName: string): any
 	return setmetatable(lazyProxy, {
 		__index = function(_, key)
 			if startedComplete then
-				error(
-					`[Nexus] Service "{serviceName}" member "{key}" accessed but service was never registered.`,
-					2
-				)
+				error(`[Nexus] Service "{serviceName}" member "{key}" accessed but service was never registered.`, 2)
 			end
 			return nil
 		end,
@@ -421,7 +419,7 @@ function Nexus.Start(_options: { [string]: any }?): any
 	started = true
 
 	return Promise.new(function(resolve: any, reject: any)
-		buildAllClientNamespacesInOrder()
+		buildAllClientChannelsInOrder()
 
 		local ordered = orderedControllers()
 
