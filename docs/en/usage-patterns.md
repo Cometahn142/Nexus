@@ -1,7 +1,6 @@
 # Usage Patterns
 
-This page focuses on the way Nexus is typically used in real projects rather
-than listing every function in isolation.
+This page focuses on the way Nexus is typically used in real projects rather than listing every function in isolation.
 
 ## Bootstrapping
 
@@ -29,8 +28,7 @@ Nexus.Start()
 
 ## Building services around contracts
 
-The most important pattern in Nexus is defining the client-facing contract
-through markers.
+The most important pattern in Nexus is defining the client-facing contract through markers.
 
 ```luau
 local InventoryService = Nexus.CreateService({
@@ -43,16 +41,13 @@ local InventoryService = Nexus.CreateService({
 })
 ```
 
-This makes the service boundary explicit and keeps networking close to the
-feature it belongs to.
+This makes the service boundary explicit and keeps networking close to the feature it belongs to.
 
-When needed, you can still use raw Snap APIs through `Nexus.Snap` without
-adding another require path.
+When needed, you can still use raw Snap APIs through `Nexus.Snap` without adding another require path.
 
 ## Using controllers as client owners
 
-Controllers are best used as the client-side owners of UI, local state, and
-service consumption.
+Controllers are best used as the client-side owners of UI, local state, and service consumption.
 
 ```luau
 local InventoryController = Nexus.CreateController({
@@ -64,11 +59,9 @@ Keep rendering, local input, and presentation logic here.
 
 ## Middleware for cross-cutting rules
 
-Use middleware when payload rules should not live inside every signal or method
-handler.
+Use middleware when payload rules should not live inside every signal or method handler.
 
 Typical examples:
-
 - validation
 - tagging outgoing payloads
 - tracing
@@ -79,8 +72,7 @@ See the dedicated [Middleware](./middleware.md) page for details.
 ## Ordering and startup
 
 Use `Order` when one service or controller should initialize before another.
-Use `OnServiceReady` and `OnControllerReady` when asynchronous readiness is the
-more natural dependency boundary.
+Use `OnServiceReady` and `OnControllerReady` when asynchronous readiness is the more natural dependency boundary.
 
 ## Practical Advice
 

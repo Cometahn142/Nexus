@@ -11,9 +11,7 @@ If your project already uses Wally:
 Nexus = "cometahn142/nexus@^0.3"
 ```
 
-Because Nexus depends on shared packages such as Snap, Promise, Signal, and
-Janitor, Wally is usually the easiest way to keep everything versioned
-together.
+Because Nexus depends on shared packages such as Snap, Promise, Signal, and Janitor, Wally is usually the easiest way to keep everything versioned together.
 
 ## Method 2: Manual or vendored source
 
@@ -23,8 +21,7 @@ If you vendor libraries directly:
 2. Make sure its dependencies are also available.
 3. Expose the package in the same place on both server and client.
 
-For Rojo-based projects, keeping Nexus inside a dedicated third-party or
-packages folder tends to be the cleanest layout.
+For Rojo-based projects, keeping Nexus inside a dedicated third-party or packages folder tends to be the cleanest layout.
 
 ## Verification
 

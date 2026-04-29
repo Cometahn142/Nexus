@@ -1,60 +1,43 @@
 # Nexus
 
-Nexus is a high-performance Luau framework for Roblox.
+A modern, robust framework for Roblox networking and state management.
 
-It follows a service/controller architecture inspired by Knit-style workflows
-and uses Snap for binary networking.
+Roblox 네트워킹 및 상태 관리를 위한 현대적인 아키텍처 프레임워크입니다.
 
-## Features
+---
 
-- Declarative service markers (`Signal`, `UnreliableSignal`, `Method`, `Property`)
-- Typed serialization through `Nexus.t` (Snap data types)
-- Quick method signature (`Nexus.Method(requestType, responseType, timeout?)`)
-- Raw Snap access via `Nexus.Snap`
-- Service and controller lifecycle (`NexusInit`, `NexusStart`)
-- Global and per-service middleware (Inbound/Outbound)
-- Deterministic `Order` execution
-- Promise-based readiness helpers (`OnServiceReady`, `OnControllerReady`)
-- Graceful shutdown via `Nexus.Stop()`
+## Documentation / 상세 문서
+- [English Documentation](./docs/en/installation.md)
+- [한국어 공식 문서](./docs/kr/installation.md)
 
-## Installation
+---
 
+## Table of Contents / 목차
+- [English](#english)
+- [한국어](#한국어)
+
+---
+
+## English
+
+### Overview
+`Nexus` provides a centralized approach using Services and Controllers.
+
+### Installation
 ```toml
 [dependencies]
 Nexus = "cometahn142/nexus@^0.3"
 ```
 
-## Server
+---
 
-```luau
-local Nexus = require(Packages.Nexus)
+## 한국어
 
-Nexus.AddServices(ServerScriptService.Services)
-Nexus.Start():andThen(function()
-	print("[Nexus] Server ready")
-end)
+### 개요
+`Nexus`는 서비스 및 컨트롤러 패턴을 활용한 중앙 집중식 개발을 지원합니다.
+
+### 설치 방법
+```toml
+[dependencies]
+Nexus = "cometahn142/nexus@^0.3"
 ```
-
-## Client
-
-```luau
-local Nexus = require(Packages.Nexus)
-
-Nexus.AddServices(ReplicatedStorage.SharedSchemas)
-Nexus.AddControllers(PlayerScripts.Controllers)
-Nexus.Start():andThen(function()
-	print("[Nexus] Client ready")
-end)
-```
-
-## Documentation
-
-- [Installation](./docs/installation.md)
-- [Usage Patterns](./docs/usage-patterns.md)
-- [Nexus API](./docs/nexus.md)
-- [Services and Controllers](./docs/services-and-controllers.md)
-- [Middleware](./docs/middleware.md)
-
-## License
-
-MIT. See `LICENSE`.

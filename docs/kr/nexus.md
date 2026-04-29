@@ -1,27 +1,26 @@
 # Nexus
 
-This page summarizes the public API surface exposed by Nexus.
+이 페이지는 Nexus가 제공하는 공개 API를 요약합니다.
 
-## Core constants
+## 핵심 상수
 
 - `Nexus.Version`
-- `Nexus.Player` (client only)
-- `Nexus.Snap` (Snap module re-export)
+- `Nexus.Player` (클라이언트 전용)
+- `Nexus.Snap` (Snap 모듈 재내보내기)
 - `Nexus.t`
 - `Nexus.Middleware`
 
-## Marker factories
+## 마커 팩토리 (Marker Factories)
 
 - `Nexus.Signal(dataType, reliability?)`
 - `Nexus.UnreliableSignal(dataType)`
 - `Nexus.Method({ Request, Response, Timeout? })`
 - `Nexus.Method(requestType, responseType, timeout?)`
 - `Nexus.Property(dataType, initialValue)`
-- `Nexus.Property(dataType, initialValue)`
 
-These define the client-facing contract of a service.
+이것들은 서비스의 클라이언트용 계약(Contract)을 정의합니다.
 
-## Registration and loading
+## 등록 및 로드
 
 - `Nexus.CreateService(serviceDef)`
 - `Nexus.AddServices(folder)`
@@ -35,16 +34,16 @@ These define the client-facing contract of a service.
 
 - `Nexus.AddModules(folder)`
 
-## Lifecycle
+## 생명주기
 
 - `Nexus.Start(options?)`
 - `Nexus.Stop()`
 - `Nexus.OnStart()`
 - `Nexus.IsStarted()`
 
-## Runtime remotes
+## 런타임 원격 객체 (Remotes)
 
-### Server-side
+### 서버 측
 
 - `RemoteSignal.listen(callback)`
 - `RemoteSignal.sendTo(player, data)`
@@ -63,7 +62,7 @@ These define the client-facing contract of a service.
 - `RemoteProperty.Get()`
 - `RemoteProperty.GetFor(player)`
 
-### Client-side
+### 클라이언트 측
 
 - `ClientSignal.listen(callback)`
 - `ClientSignal.send(data)`
@@ -76,13 +75,13 @@ These define the client-facing contract of a service.
 - `ClientProperty.Observe(callback)`
 - `ClientProperty.OnChanged(callback)`
 
-## Related Docs
+## 관련 문서
 
-- [Installation](./installation.md)
-- [Usage Patterns](./usage-patterns.md)
-- [Services and Controllers](./services-and-controllers.md)
-- [Middleware](./middleware.md)
+- [설치 방법 (Installation)](./installation.md)
+- [사용 패턴 (Usage Patterns)](./usage-patterns.md)
+- [서비스와 컨트롤러 (Services and Controllers)](./services-and-controllers.md)
+- [미들웨어 (Middleware)](./middleware.md)
 
-## License
+## 라이선스
 
-MIT. See `LICENSE`.
+MIT. `LICENSE` 파일을 참조하세요.

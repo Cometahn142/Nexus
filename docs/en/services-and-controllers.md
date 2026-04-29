@@ -1,7 +1,6 @@
 # Services and Controllers
 
-This page explains how Nexus splits application logic between services and
-controllers.
+This page explains how Nexus splits application logic between services and controllers.
 
 ## Services
 
@@ -42,8 +41,7 @@ local Service = Nexus.CreateService({
   - `OnPlayerAdded(self, player)`
   - `OnPlayerRemoving(self, player)`
 
-Services are the right place for shared state, authoritative logic, and
-client-facing contracts.
+Services are the right place for shared state, authoritative logic, and client-facing contracts.
 
 ## Controllers
 
@@ -65,12 +63,10 @@ local Controller = Nexus.CreateController({
   - `OnRenderStepped(self, dt)`
   - `OnPostSimulation(self, dt)`
 
-Controllers are usually the right home for UI state, local input handling,
-camera logic, and other client-owned behavior.
+Controllers are usually the right home for UI state, local input handling, camera logic, and other client-owned behavior.
 
 > [!IMPORTANT]
-> To use `Nexus.GetService` on the client, the client framework must know the service's contract. 
-> You must expose the service definitions (specifically the `.Client` schemas) to the client (e.g. in `ReplicatedStorage`) and call `Nexus.AddServices(SharedFolder)` on the client before starting.
+> To use `Nexus.GetService` on the client, the client framework must know the service's contract. You must expose the service definitions (specifically the `.Client` schemas) to the client (e.g. in `ReplicatedStorage`) and call `Nexus.AddServices(SharedFolder)` on the client before starting.
 
 ## Access helpers
 

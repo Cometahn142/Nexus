@@ -20,8 +20,7 @@ function(player: Player?, data: any): (boolean, any?)
 - Return `true, newData` to pass transformed payload.
 - Return `true, nil` to pass original payload.
 
-This makes middleware useful for shared validation, payload shaping, and
-cross-cutting concerns that should not be repeated in every remote handler.
+This makes middleware useful for shared validation, payload shaping, and cross-cutting concerns that should not be repeated in every remote handler.
 
 ## Example
 
@@ -42,8 +41,7 @@ Nexus.Middleware.Outbound = {
 - Inbound: global -> service
 - Outbound: service -> global
 
-Use service middleware for domain-specific rules and global middleware for
-cross-cutting concerns like tracing, rate-limit tags, or common validation.
+Use service middleware for domain-specific rules and global middleware for cross-cutting concerns like tracing, rate-limit tags, or common validation.
 
 ## License
 
